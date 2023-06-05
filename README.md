@@ -1,0 +1,1 @@
+# firmy-cz-scraper
