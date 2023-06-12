@@ -1,5 +1,6 @@
 import Foundation
 import SwiftSoup
+import Spinner
 
 enum ScraperError: Error {
     case invalidUrl
@@ -14,6 +15,8 @@ struct Scraper {
         let group = DispatchGroup()
         let queue = DispatchQueue(label: "com.orexin.con", attributes: .concurrent)
         
+        let s1 = Spinner(.arc, "scraping firmy")
+        s1.start()
         var allUrls: [String] = []
         for pageNumber in 1...pageLimit {
             queue.async(group: group) { [self] in
@@ -25,7 +28,11 @@ struct Scraper {
             }
         }
         group.wait()
+        s1.stop()
+        print("firmy scraped: \(allUrls.count)")
         
+        let s2 = Spinner(.arc, "scraping data")
+        s2.start()
         var data: [[String]] = []
         for urlString in allUrls {
             queue.async(group: group) { [self] in
@@ -36,13 +43,13 @@ struct Scraper {
             }
         }
         group.wait()
+        s2.stop()
         
         return data
     }
     
     private func scrapeUrlsFromPage(_ pageNumber: UInt32) throws -> [String] {
         let urlString = baseUrl + query + "&page=\(pageNumber)"
-        print(urlString)
         guard let url = URL(string: urlString) else {
             print("Invalid url: \(urlString)")
             throw ScraperError.invalidUrl

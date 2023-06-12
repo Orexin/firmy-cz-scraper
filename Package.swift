@@ -5,9 +5,11 @@ import PackageDescription
 
 let package = Package(
     name: "firmy-cz-scraper",
+    platforms: [.macOS(.v12)],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
+        .package(url: "https://github.com/dominicegginton/Spinner", from: "1.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -16,6 +18,7 @@ let package = Package(
             name: "firmy-cz-scraper",
             dependencies: [
                 "SwiftSoup",
+                "Spinner",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             path: "Sources"),

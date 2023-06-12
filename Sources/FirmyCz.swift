@@ -1,7 +1,7 @@
 import Foundation
 import ArgumentParser
 
-@available(iOS 13.4, *)
+@available(macOS 13.4, *)
 @main
 struct FirmyCz: ParsableCommand {
     @Option(name: .shortAndLong, help: "page limit, default: 150")
@@ -19,6 +19,7 @@ struct FirmyCz: ParsableCommand {
     mutating func run() throws {
         query = query.replacingOccurrences(of: " ", with: "+")
         try write(try getFile(), try Scraper(query: query, pageLimit: limit).scrape())
+        print("done!")
     }
     
     private func getFile() throws -> FileHandle {
@@ -42,11 +43,12 @@ struct FirmyCz: ParsableCommand {
     }
     
     private func write(_ file: FileHandle, _ data: [[String]]) throws {
+        print("writing file...")
         try file.seekToEnd()
         for row in data {
             for (i, col) in row.enumerated() {
                 try file.write(contentsOf: col.data(using: .utf8)!)
-                if i != row.count {
+                if i != row.count - 1 {
                     try file.write(contentsOf: ";".data(using: .utf8)!)
                 }
             }
