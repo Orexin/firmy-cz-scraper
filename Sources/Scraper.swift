@@ -4,14 +4,29 @@ import Spinner
 
 enum ScraperError: Error {
     case invalidUrl
+    case invalidFormat
+}
+
+enum ScraperColumns {
+    case title
+    case address
+    case web
+    case phone
+    case email
+    case ico
+    case description
+    case firmylink
 }
 
 struct Scraper {
     private let baseUrl = "https://www.firmy.cz/?q="
     public let query: String
     public let pageLimit: UInt32
+    public let formatt: String?
+    public var columns: [ScraperColumns] = [ ScraperColumns.title, ScraperColumns.web, ScraperColumns.phone, ScraperColumns.email, ScraperColumns.firmylink ]
     
-    public func scrape() throws -> [[String]] {
+    public mutating func scrape() throws -> [[String]] {
+        try parseFormat()
         let group = DispatchGroup()
         let queue = DispatchQueue(label: "com.orexin.con", attributes: .concurrent)
         
@@ -69,16 +84,62 @@ struct Scraper {
         do {
             let content = try String(contentsOf: url)
             let doc = try SwiftSoup.parse(content)
-            data.append(try doc.select(".detailPrimaryTitle").text())
-            data.append(try doc.select(".detailAddress").text().replacingOccurrences(of: "Navigovat", with: ""))
-            data.append(try doc.select(".detailWebUrl").text())
-            data.append(try doc.select(".detailPhone > span").text())
-            data.append(try doc.select(".detailEmail > a").text())
-            data.append(try doc.select(".detailBusinessInfo").text().replacingOccurrences(of: "Více", with: ""))
-            // TODO: grab description
+            
+            // TODO: change the order of columns according to --format
+            for col in columns {
+                switch col {
+                case .title:
+                    data.append(try doc.select(".detailPrimaryTitle").text())
+                case .address:
+                    data.append(try doc.select(".detailAddress").text().replacingOccurrences(of: "Navigovat", with: ""))
+                case .web:
+                    data.append(try doc.select(".detailWebUrl").text())
+                case .phone:
+                    data.append(try doc.select(".detailPhone > span").text())
+                case .email:
+                    data.append(try doc.select(".detailEmail > a").text())
+                case .ico:
+                    data.append(try doc.select(".detailBusinessInfo").text().replacingOccurrences(of: "Více", with: ""))
+                case .firmylink:
+                    data.append(url.absoluteString)
+                case .description:
+                    // TODO: grab description
+                    continue
+                }
+            }
         } catch {
             return data
         }
         return data
+    }
+    
+    private mutating func parseFormat() throws {
+        if formatt == nil {
+            return
+        }
+        columns = []
+        for col in formatt!.components(separatedBy: ";") {
+            switch col {
+            case "title":
+                columns.append(ScraperColumns.title)
+            case "address":
+                columns.append(ScraperColumns.address)
+            case "web":
+                columns.append(ScraperColumns.web)
+            case "phone":
+                columns.append(ScraperColumns.phone)
+            case "email":
+                columns.append(ScraperColumns.email)
+            case "ico":
+                columns.append(ScraperColumns.ico)
+            case "firmylink":
+                columns.append(ScraperColumns.firmylink)
+            case "description":
+                // TODO: grab description
+                continue
+            default:
+                throw ScraperError.invalidFormat
+            }
+        }
     }
 }

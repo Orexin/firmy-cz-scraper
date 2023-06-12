@@ -4,11 +4,22 @@ import ArgumentParser
 @available(macOS 13.4, *)
 @main
 struct FirmyCz: ParsableCommand {
+    static var configuration = CommandConfiguration(
+        abstract: "Scrapes data from firmy.cz",
+        usage: """
+            firmy-cz-scraper <query>
+            firmy-cz-scraper <query> --limit 5 --format "title;address;web;phone;email;ico;description;fimylink"
+            """
+    )
+    
     @Option(name: .shortAndLong, help: "page limit, default: 150")
     var limit: UInt32 = 150
     
     @Option(name: .shortAndLong, help: "output file, default: ./data.csv")
     var output: String? = nil
+    
+    @Option(name: .shortAndLong, help: "format the data, default: title;web;phone;email;firmylink")
+    var format: String? = nil
     
     @Flag(name: .shortAndLong, help: "append to output file, defaul: false")
     var append = false
@@ -18,7 +29,8 @@ struct FirmyCz: ParsableCommand {
     
     mutating func run() throws {
         query = query.replacingOccurrences(of: " ", with: "+")
-        try write(try getFile(), try Scraper(query: query, pageLimit: limit).scrape())
+        var scraper = Scraper(query: query, pageLimit: limit, formatt: format)
+        try write(try getFile(), try scraper.scrape())
         print("done!")
     }
     
