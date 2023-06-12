@@ -89,7 +89,6 @@ struct Scraper {
             let content = try String(contentsOf: url)
             let doc = try SwiftSoup.parse(content)
             
-            // TODO: change the order of columns according to --format
             for col in columns {
                 switch col {
                 case .title:
@@ -107,7 +106,7 @@ struct Scraper {
                 case .firmylink:
                     data.append(url.absoluteString)
                 case .description:
-                    // TODO: grab description
+                    data.append(try doc.select(".description").text())
                     continue
                 }
             }
