@@ -7,22 +7,23 @@ enum ScraperError: Error {
     case invalidFormat
 }
 
-enum ScraperColumns {
-    case title
-    case address
-    case web
-    case phone
-    case email
-    case ico
-    case description
-    case firmylink
+enum ScraperColumns: String {
+    case title = "title"
+    case address = "address"
+    case web = "web"
+    case phone = "phone"
+    case email = "email"
+    case ico = "ico"
+    case description = "description"
+    case firmylink = "firmylink"
 }
 
 struct Scraper {
     private let baseUrl = "https://www.firmy.cz/?q="
     public let query: String
     public let pageLimit: UInt32
-    public let formatt: String?
+    public let format: String?
+    public let prependColNames: Bool
     public var columns: [ScraperColumns] = [ ScraperColumns.title, ScraperColumns.web, ScraperColumns.phone, ScraperColumns.email, ScraperColumns.firmylink ]
     
     public mutating func scrape() throws -> [[String]] {
@@ -49,6 +50,9 @@ struct Scraper {
         let s2 = Spinner(.arc, "scraping data")
         s2.start()
         var data: [[String]] = []
+        if prependColNames {
+            data.append(try prependColumnNames())
+        }
         for urlString in allUrls {
             queue.async(group: group) { [self] in
                 guard let url = URL(string: urlString) else {
@@ -114,32 +118,26 @@ struct Scraper {
     }
     
     private mutating func parseFormat() throws {
-        if formatt == nil {
+        if format == nil {
             return
         }
         columns = []
-        for col in formatt!.components(separatedBy: ";") {
-            switch col {
-            case "title":
-                columns.append(ScraperColumns.title)
-            case "address":
-                columns.append(ScraperColumns.address)
-            case "web":
-                columns.append(ScraperColumns.web)
-            case "phone":
-                columns.append(ScraperColumns.phone)
-            case "email":
-                columns.append(ScraperColumns.email)
-            case "ico":
-                columns.append(ScraperColumns.ico)
-            case "firmylink":
-                columns.append(ScraperColumns.firmylink)
-            case "description":
-                // TODO: grab description
-                continue
-            default:
+        for col in format!.components(separatedBy: ";") {
+            guard let column = ScraperColumns(rawValue: col) else {
                 throw ScraperError.invalidFormat
             }
+            columns.append(column)
         }
+    }
+    
+    func prependColumnNames() throws -> [String] {
+        var columnNames: [String] = []
+        for col in columns {
+            columnNames.append(col.rawValue)
+        }
+        if columnNames == [] {
+            throw ScraperError.invalidFormat
+        }
+        return columnNames
     }
 }

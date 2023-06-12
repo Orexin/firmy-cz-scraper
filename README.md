@@ -28,5 +28,6 @@ OPTIONS:
   -o, --output <output>   output file, default: ./data.csv
   -f, --format <format>   format the data, default: title;web;phone;email;firmylink
   -a, --append            append to output file, defaul: false
+  -p, --prepend-col-names prepend column names in output file, default: false
   -h, --help              Show help information.
 ```

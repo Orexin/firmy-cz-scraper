@@ -24,12 +24,15 @@ struct FirmyCz: ParsableCommand {
     @Flag(name: .shortAndLong, help: "append to output file, defaul: false")
     var append = false
     
+    @Flag(name: .shortAndLong, help: "prepend column names in output file, default: false")
+    var prependColNames = false
+    
     @Argument(help: "search query")
     var query: String
     
     mutating func run() throws {
         query = query.replacingOccurrences(of: " ", with: "+")
-        var scraper = Scraper(query: query, pageLimit: limit, formatt: format)
+        var scraper = Scraper(query: query, pageLimit: limit, format: format, prependColNames: prependColNames)
         try write(try getFile(), try scraper.scrape())
         print("done!")
     }
